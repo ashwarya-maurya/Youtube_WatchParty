@@ -21,6 +21,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
+server.listen(env.PORT, () => {
   console.log(`Server listening on http://localhost:${env.PORT}`);
 });

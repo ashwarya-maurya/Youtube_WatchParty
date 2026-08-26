@@ -100,9 +100,9 @@ http://localhost:5173
 - Frontend loads in the browser.
 - With both applications running, the frontend establishes a Socket.IO connection to the backend.
 
-## Documentation
+## Architecture documentation
 
-See [Architecture](docs/architecture.md) for the Phase 1 server-authoritative design, room lifecycle, role policy, event contract, and playback synchronization strategy.
+The detailed Phase 1 architecture document is maintained locally and is not included in this repository. It covers the server-authoritative design, room lifecycle, role policy, Socket.IO event contract, and playback synchronization strategy.
 
 ## Known limitations
 
