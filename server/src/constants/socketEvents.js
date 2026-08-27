@@ -14,6 +14,10 @@ const SOCKET_EVENTS = {
   ASSIGN_ROLE: "assign_role",
   REMOVE_PARTICIPANT: "remove_participant",
   REMOVED_FROM_ROOM: "removed_from_room",
+  SEND_MESSAGE: "send_message",
+  CHAT_MESSAGE: "chat_message",
+  SEND_REACTION: "send_reaction",
+  REACTION_RECEIVED: "reaction_received",
 };
 
 module.exports = SOCKET_EVENTS;
