@@ -113,6 +113,17 @@ const findRoomBySocketId = (socketId) => {
   return null;
 };
 
+const updateParticipantRole = (roomId, targetSocketId, newRole) => {
+  const participant = findParticipantBySocketId(roomId, targetSocketId);
+
+  if (!participant) {
+    return null;
+  }
+
+  participant.role = newRole;
+  return participant;
+};
+
 module.exports = {
   createRoom,
   getRoom,
@@ -124,4 +135,5 @@ module.exports = {
   getParticipants,
   updatePlaybackState,
   findRoomBySocketId,
+  updateParticipantRole,
 };

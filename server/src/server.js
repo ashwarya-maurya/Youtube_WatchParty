@@ -4,6 +4,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const app = require("./app");
 const registerRoomHandlers = require("./socket/roomHandlers");
+const registerPlaybackHandlers = require("./socket/playbackHandlers");
+const registerParticipantHandlers = require("./socket/participantHandlers");
 
 const server = http.createServer(app);
 
@@ -16,7 +18,10 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
+  
   registerRoomHandlers(io, socket);
+  registerPlaybackHandlers(io, socket);
+  registerParticipantHandlers(io, socket);
 
   socket.on("disconnect", () => {
     console.log("Socket disconnected:", socket.id);

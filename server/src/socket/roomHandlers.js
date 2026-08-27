@@ -1,6 +1,7 @@
 const SOCKET_EVENTS = require("../constants/socketEvents");
 const { validateCreateRoomPayload, validateJoinRoomPayload } = require("../validators/roomValidator");
 const roomService = require("../services/roomService");
+const playbackService = require("../services/playbackService");
 
 const removeSocketsFromClosedRoom = (io, roomId) => {
   const socketRoom = io.sockets.adapter.rooms.get(roomId);
@@ -103,6 +104,12 @@ const registerRoomHandlers = (io, socket) => {
 
     socket.join(result.roomId);
 
+    const syncResult = playbackService.getSyncStateForRoom(result.roomId);
+
+    if (syncResult.success) {
+      socket.emit(SOCKET_EVENTS.SYNC_STATE, syncResult.syncState);
+    }
+
     io.to(result.roomId).emit(
       SOCKET_EVENTS.PARTICIPANTS_UPDATED,
       result.participants
@@ -113,6 +120,7 @@ const registerRoomHandlers = (io, socket) => {
       roomId: result.roomId,
       participant: result.participant,
       participants: result.participants,
+      syncState: syncResult.success ? syncResult.syncState : null,
     });
   });
 
