@@ -1,6 +1,9 @@
-import React from "react";
 import { useEffect, useState } from "react";
+import { Route, Routes } from "react-router-dom";
 import socket from "./services/socketService";
+import HomePage from "./pages/HomePage";
+import RoomPage from "./pages/RoomPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const App = () => {
   const [connectionStatus, setConnectionStatus] = useState("Disconnected");
@@ -26,10 +29,11 @@ const App = () => {
   }, []);
 
   return (
-    <main>
-      <h1>YouTube Watch Party</h1>
-      <p>Socket status: {connectionStatus}</p>
-    </main>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/room/:roomId" element = {<RoomPage/>} />
+      <Route path="*" element = {<NotFoundPage/>} />
+    </Routes>
   );
 };
 
