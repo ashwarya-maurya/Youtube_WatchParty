@@ -121,6 +121,26 @@ const RoomPage = () => {
   const [reactions, setReactions] = useState([]);
   const [reactionError, setReactionError] = useState("");
 
+  useEffect(() => {
+    if (connectionStatus !== "Connected") {
+      return;
+    }
+
+    const hasCurrentRoomSession =
+      initialParticipant && initialParticipant.socketId === socket.id;
+
+    if (hasCurrentRoomSession) {
+      return;
+    }
+
+    navigate("/not-found", {
+      replace: true,
+      state: {
+        message: "This room no longer exists or is unavailable.",
+      },
+    });
+  }, [connectionStatus, initialParticipant, navigate]);
+
   const localParticipant = useMemo(() => {
     if (!socket.id) {
       return initialParticipant || null;

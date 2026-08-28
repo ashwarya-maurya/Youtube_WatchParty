@@ -99,12 +99,22 @@ button:disabled {
   overflow: hidden;
 }
 
+.video-player {
+  position: relative;
+}
+
 .video-player iframe {
   width: 100%;
   aspect-ratio: 16 / 9;
   height: auto;
   display: block;
   border: 0;
+}
+
+.player-interaction-blocker {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .participant-list,

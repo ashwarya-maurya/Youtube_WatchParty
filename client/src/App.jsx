@@ -32,8 +32,9 @@ const App = () => {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/room/:roomId" element = {<RoomPage/>} />
-      <Route path="*" element = {<NotFoundPage/>} />
+      <Route path="/room/:roomId" element={<RoomPage />} />
+      <Route path="/not-found" element={<NotFoundPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

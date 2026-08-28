@@ -39,6 +39,10 @@ const YouTubePlayer = ({
           },
         }}
       />
+
+      {!canControlPlayback && (
+        <div className="player-interaction-blocker" aria-hidden="true" />
+      )}
     </section>
   );
 };
