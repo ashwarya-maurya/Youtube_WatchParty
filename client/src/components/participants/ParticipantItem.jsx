@@ -4,13 +4,44 @@ const ROLE_LABELS = {
   participant: "PARTICIPANT",
 };
 
-const ParticipantItem = ({ participant }) => {
+const ParticipantItem = ({
+  participant,
+  isHost,
+  localSocketId,
+  onAssignRole,
+  onRemoveParticipant,
+}) => {
   const roleLabel = ROLE_LABELS[participant.role] || "PARTICIPANT";
+  const isSelf = participant.socketId === localSocketId;
+
+  const canPromote = isHost && participant.role === "participant";
+  const canRemove =
+    isHost &&
+    !isSelf &&
+    (participant.role === "participant" || participant.role === "moderator");
 
   return (
     <li>
       <span>{participant.username}</span>
       <span>{roleLabel}</span>
+
+      {canPromote && (
+        <button
+          type="button"
+          onClick={() => onAssignRole(participant.socketId)}
+        >
+          Make Moderator
+        </button>
+      )}
+
+      {canRemove && (
+        <button
+          type="button"
+          onClick={() => onRemoveParticipant(participant.socketId)}
+        >
+          Remove
+        </button>
+      )}
     </li>
   );
 };

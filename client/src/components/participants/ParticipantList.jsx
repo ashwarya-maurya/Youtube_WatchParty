@@ -1,6 +1,12 @@
 import ParticipantItem from "./ParticipantItem";
 
-const ParticipantList = ({ participants }) => {
+const ParticipantList = ({
+  participants,
+  isHost,
+  localSocketId,
+  onAssignRole,
+  onRemoveParticipant,
+}) => {
   return (
     <section>
       <h2>Participants</h2>
@@ -13,6 +19,10 @@ const ParticipantList = ({ participants }) => {
             <ParticipantItem
               key={participant.socketId}
               participant={participant}
+              isHost={isHost}
+              localSocketId={localSocketId}
+              onAssignRole={onAssignRole}
+              onRemoveParticipant={onRemoveParticipant}
             />
           ))}
         </ul>

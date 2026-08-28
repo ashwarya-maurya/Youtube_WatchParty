@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import socket from "../services/socketService";
 import SOCKET_EVENTS from "../constants/socketEvents";
 
@@ -10,6 +10,8 @@ const HomePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeMessage = location.state?.message;
 
   const handleCreateRoom = () => {
     const trimmedUsername = username.trim();
@@ -96,6 +98,7 @@ const HomePage = () => {
   return (
     <main>
       <h1>YouTube Watch Party</h1>
+      {routeMessage && <p>{routeMessage}</p>}
       <p>Create or join a watch party here later.</p>
 
       <section>
@@ -136,6 +139,7 @@ const HomePage = () => {
         </button>
       </section>
 
+      {routeMessage && <p role="status">{routeMessage}</p>}
       {error && <p role="alert">{error}</p>}
     </main>
   );

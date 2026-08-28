@@ -1,16 +1,106 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ParticipantList from "../components/participants/ParticipantList";
 import socket from "../services/socketService";
 import SOCKET_EVENTS from "../constants/socketEvents";
 import YouTubePlayer from "../components/video/YoutubePlayer";
 import VideoUrlForm from "../components/video/VideoUrlForm";
+import ChatPanel from "../components/chat/ChatPanel";
+import ReactionPanel from "../components/reactions/ReactionPanel";
 
 const RoomPage = () => {
   const { roomId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const youtubePlayerRef = useRef(null);
+  const remotePlaybackActionRef = useRef(null);
+  const suppressSeekDetectionUntilRef = useRef(0);
+  const hasAppliedInitialSyncRef = useRef(false);
+  const isPlayerPlayingRef = useRef(false);
+  const reactionRemovalTimersRef = useRef({});
+
+  const handlePlayerReady = (player) => {
+    youtubePlayerRef.current = player;
+
+    if (hasAppliedInitialSyncRef.current) {
+      return;
+    }
+
+    if (!initialSyncState?.videoId) {
+      return;
+    }
+
+    hasAppliedInitialSyncRef.current = true;
+    suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+
+    player.seekTo(initialSyncState.currentTime || 0, true);
+
+    if (initialSyncState.isPlaying) {
+      remotePlaybackActionRef.current = "play";
+      player.playVideo();
+    } else {
+      remotePlaybackActionRef.current = "pause";
+      player.pauseVideo();
+    }
+  };
+
+  const handlePlayerStateChange = (event) => {
+    const player = youtubePlayerRef.current;
+
+    if (!player) {
+      return;
+    }
+
+    if (event.data === 1) {
+      isPlayerPlayingRef.current = true;
+    }
+
+    if (event.data === 2) {
+      isPlayerPlayingRef.current = false;
+    }
+
+    if (event.data === 1 && remotePlaybackActionRef.current === "play") {
+      remotePlaybackActionRef.current = null;
+      return;
+    }
+
+    if (event.data === 2 && remotePlaybackActionRef.current === "pause") {
+      remotePlaybackActionRef.current = null;
+      return;
+    }
+
+    if (!canControlPlayback) {
+      return;
+    }
+
+    if (!socket.connected) {
+      setVideoError("Socket is not connected. Please refresh and try again.");
+      return;
+    }
+
+    const currentTime = player.getCurrentTime();
+
+    if (event.data === 1) {
+      socket.emit(SOCKET_EVENTS.PLAY, { currentTime }, (response) => {
+        if (!response?.success) {
+          setVideoError(response?.error || "Failed to play video.");
+        }
+      });
+
+      return;
+    }
+
+    if (event.data === 2) {
+      socket.emit(SOCKET_EVENTS.PAUSE, { currentTime }, (response) => {
+        if (!response?.success) {
+          setVideoError(response?.error || "Failed to pause video.");
+        }
+      });
+    }
+  };
 
   const navigationState = location.state;
+  const initialSyncState = navigationState?.syncState || null;
   const initialParticipant = navigationState?.participant;
 
   const initialParticipants =
@@ -23,6 +113,13 @@ const RoomPage = () => {
   );
 
   const [videoError, setVideoError] = useState("");
+  const [participantActionError, setParticipantActionError] = useState("");
+
+  const [messages, setMessages] = useState([]);
+  const [chatError, setChatError] = useState("");
+
+  const [reactions, setReactions] = useState([]);
+  const [reactionError, setReactionError] = useState("");
 
   const localParticipant = useMemo(() => {
     if (!socket.id) {
@@ -38,6 +135,7 @@ const RoomPage = () => {
 
   const canControlPlayback =
     localParticipant?.role === "host" || localParticipant?.role === "moderator";
+  const isHost = localParticipant?.role === "host";
 
   const roomUrl = window.location.href;
 
@@ -59,6 +157,72 @@ const RoomPage = () => {
         }
       },
     );
+  };
+
+  const handleAssignRole = (targetSocketId) => {
+    if (!socket.connected) {
+      setParticipantActionError(
+        "Socket is not connected. Please refresh and try again.",
+      );
+      return;
+    }
+
+    socket.emit(SOCKET_EVENTS.ASSIGN_ROLE, { targetSocketId }, (response) => {
+      if (!response?.success) {
+        setParticipantActionError(
+          response?.error || "Failed to make participant a moderator.",
+        );
+      }
+    });
+  };
+
+  const handleRemoveParticipant = (targetSocketId) => {
+    if (!socket.connected) {
+      setParticipantActionError(
+        "Socket is not connected. Please refresh and try again.",
+      );
+      return;
+    }
+
+    socket.emit(
+      SOCKET_EVENTS.REMOVE_PARTICIPANT,
+      { targetSocketId },
+      (response) => {
+        if (!response?.success) {
+          setParticipantActionError(
+            response?.error || "Failed to remove participant.",
+          );
+        }
+      },
+    );
+  };
+
+  const handleSendMessage = (text) => {
+    if (!socket.connected) {
+      setChatError("Socket is not connected. Please refresh and try again.");
+      return;
+    }
+
+    socket.emit(SOCKET_EVENTS.SEND_MESSAGE, { text }, (response) => {
+      if (!response?.success) {
+        setChatError(response?.error || "Failed to send message.");
+      }
+    });
+  };
+
+  const handleSendReaction = (emoji) => {
+    if (!socket.connected) {
+      setReactionError(
+        "Socket is not connected. Please refresh and try again.",
+      );
+      return;
+    }
+
+    socket.emit(SOCKET_EVENTS.SEND_REACTION, { emoji }, (response) => {
+      if (!response?.success) {
+        setReactionError(response?.error || "Failed to send reaction.");
+      }
+    });
   };
 
   useEffect(() => {
@@ -104,6 +268,173 @@ const RoomPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handlePlaybackUpdated = ({ action, playbackState }) => {
+      const player = youtubePlayerRef.current;
+
+      if (!player || !playbackState?.videoId) {
+        return;
+      }
+
+      setVideoId(playbackState.videoId);
+      setVideoError("");
+
+      if (action === "play") {
+        const now = Date.now();
+        const estimatedCurrentTime =
+          playbackState.currentTime + (now - playbackState.updatedAt) / 1000;
+
+        remotePlaybackActionRef.current = "play";
+        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+
+        player.seekTo(estimatedCurrentTime, true);
+        player.playVideo();
+        return;
+      }
+
+      if (action === "pause") {
+        remotePlaybackActionRef.current = "pause";
+        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+
+        player.seekTo(playbackState.currentTime, true);
+        player.pauseVideo();
+        return;
+      }
+
+      if (action === "seek") {
+        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+
+        player.seekTo(playbackState.currentTime, true);
+      }
+    };
+
+    socket.on(SOCKET_EVENTS.PLAYBACK_UPDATED, handlePlaybackUpdated);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.PLAYBACK_UPDATED, handlePlaybackUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canControlPlayback) {
+      return;
+    }
+
+    let previousTime = null;
+    let previousObservedAt = null;
+
+    const intervalId = setInterval(() => {
+      const player = youtubePlayerRef.current;
+
+      if (!player) {
+        return;
+      }
+
+      if (!socket.connected) {
+        previousTime = null;
+        previousObservedAt = null;
+        return;
+      }
+
+      const now = Date.now();
+      const currentTime = player.getCurrentTime();
+
+      if (previousTime === null || previousObservedAt === null) {
+        previousTime = currentTime;
+        previousObservedAt = now;
+        return;
+      }
+
+      const elapsedSeconds = (now - previousObservedAt) / 1000;
+      const expectedTime = isPlayerPlayingRef.current
+        ? previousTime + elapsedSeconds
+        : previousTime;
+      const timeDifference = Math.abs(currentTime - expectedTime);
+
+      previousTime = currentTime;
+      previousObservedAt = now;
+
+      if (now < suppressSeekDetectionUntilRef.current) {
+        return;
+      }
+
+      if (timeDifference <= 2) {
+        return;
+      }
+
+      socket.emit(SOCKET_EVENTS.SEEK, { currentTime }, (response) => {
+        if (!response?.success) {
+          setVideoError(response?.error || "Failed to seek video.");
+        }
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [canControlPlayback]);
+
+  useEffect(() => {
+    const handleRemovedFromRoom = ({ message }) => {
+      const removalMessage = message || "You were removed from the room.";
+
+      navigate("/", {
+        replace: true,
+        state: { message: removalMessage },
+      });
+    };
+
+    socket.on(SOCKET_EVENTS.REMOVED_FROM_ROOM, handleRemovedFromRoom);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.REMOVED_FROM_ROOM, handleRemovedFromRoom);
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    const handleChatMessage = (message) => {
+      setMessages((currentMessages) => [...currentMessages, message]);
+      setChatError("");
+    };
+
+    socket.on(SOCKET_EVENTS.CHAT_MESSAGE, handleChatMessage);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.CHAT_MESSAGE, handleChatMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleReactionReceived = (reaction) => {
+      setReactions((currentReactions) => [...currentReactions, reaction]);
+      setReactionError("");
+
+      const timerId = setTimeout(() => {
+        setReactions((currentReactions) =>
+          currentReactions.filter(
+            (currentReaction) => currentReaction.id !== reaction.id,
+          ),
+        );
+
+        delete reactionRemovalTimersRef.current[reaction.id];
+      }, 3000);
+
+      reactionRemovalTimersRef.current[reaction.id] = timerId;
+    };
+
+    socket.on(SOCKET_EVENTS.REACTION_RECEIVED, handleReactionReceived);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.REACTION_RECEIVED, handleReactionReceived);
+
+      Object.values(reactionRemovalTimersRef.current).forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+
+      reactionRemovalTimersRef.current = {};
+    };
+  }, []);
+
   return (
     <main>
       <header>
@@ -135,21 +466,38 @@ const RoomPage = () => {
 
         {videoError && <p>{videoError}</p>}
 
-        <YouTubePlayer videoId={videoId} />
+        <YouTubePlayer
+          videoId={videoId}
+          onPlayerReady={handlePlayerReady}
+          onPlayerStateChange={handlePlayerStateChange}
+          canControlPlayback={canControlPlayback}
+        />
       </section>
 
       <aside>
-        <ParticipantList participants={participants} />
+        <ParticipantList
+          participants={participants}
+          isHost={isHost}
+          localSocketId={socket.id}
+          onAssignRole={handleAssignRole}
+          onRemoveParticipant={handleRemoveParticipant}
+        />
 
-        <section>
-          <h2>Chat</h2>
-          <p>Chat placeholder</p>
-        </section>
+        {participantActionError && <p>{participantActionError}</p>}
 
-        <section>
-          <h2>Reactions</h2>
-          <p>Reactions placeholder</p>
-        </section>
+        <ChatPanel
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          chatError={chatError}
+          isConnected={socket.connected}
+        />
+
+        <ReactionPanel
+          reactions={reactions}
+          onSendReaction={handleSendReaction}
+          reactionError={reactionError}
+          isConnected={socket.connected}
+        />
       </aside>
     </main>
   );
