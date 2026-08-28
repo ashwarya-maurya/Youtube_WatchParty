@@ -476,25 +476,44 @@ const RoomPage = () => {
   return (
     <main className="room-page">
       <header className="room-header">
-        <h1>Watch Party Room</h1>
-        <p className="room-meta">Room code: {roomId}</p>
-        <p
-          className={`room-meta connection-status ${
-            connectionStatus === "Connected"
-              ? "connection-online"
-              : "connection-offline"
-          }`}
-        >
-          Connection: {connectionStatus}
-        </p>
-        <p className="room-meta">Share link: {roomUrl}</p>
+        <div className="room-title-row">
+          <div>
+            <p className="eyebrow">WATCH PARTY ROOM</p>
+            <h1>Watch Party Room</h1>
+          </div>
 
-        {localParticipant ? (
-          <p>
-            Signed in as {localParticipant.username} ({localParticipant.role})
+          {localParticipant && (
+            <p className="room-user-summary">
+              <span>Signed in as</span>
+              {localParticipant.username}
+            </p>
+          )}
+        </div>
+
+        <div className="room-details">
+          <p className="room-meta">
+            <span className="room-meta-label">Room code</span>
+            <strong>{roomId}</strong>
           </p>
-        ) : (
-          <p>
+
+          <p
+            className={`room-meta connection-status ${
+              connectionStatus === "Connected"
+                ? "connection-online"
+                : "connection-offline"
+            }`}
+          >
+            {connectionStatus}
+          </p>
+
+          <p className="room-meta room-share-link">
+            <span className="room-meta-label">Share link</span>
+            {roomUrl}
+          </p>
+        </div>
+
+        {!localParticipant && (
+          <p className="status-message room-direct-access-message">
             You opened this room page directly. Create or join a room from the
             home page first.
           </p>
@@ -503,7 +522,12 @@ const RoomPage = () => {
 
       <div className="room-layout">
         <section className="video-column">
-          <h2>Video</h2>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">SHARED PLAYER</p>
+              <h2>Video</h2>
+            </div>
+          </div>
 
           {canControlPlayback ? (
             <VideoUrlForm onVideoSelected={handleVideoSelected} />
@@ -525,6 +549,15 @@ const RoomPage = () => {
             onPlayerStateChange={handlePlayerStateChange}
             canControlPlayback={canControlPlayback}
           />
+
+          <div className="video-reactions">
+            <ReactionPanel
+              reactions={reactions}
+              onSendReaction={handleSendReaction}
+              reactionError={reactionError}
+              isConnected={socket.connected}
+            />
+          </div>
         </section>
 
         <aside className="sidebar">
@@ -546,13 +579,6 @@ const RoomPage = () => {
             messages={messages}
             onSendMessage={handleSendMessage}
             chatError={chatError}
-            isConnected={socket.connected}
-          />
-
-          <ReactionPanel
-            reactions={reactions}
-            onSendReaction={handleSendReaction}
-            reactionError={reactionError}
             isConnected={socket.connected}
           />
         </aside>

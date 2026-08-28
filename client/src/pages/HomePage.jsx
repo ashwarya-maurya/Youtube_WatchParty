@@ -96,55 +96,78 @@ const HomePage = () => {
   };
 
   return (
-    <main>
-      <h1>YouTube Watch Party</h1>
-      {routeMessage && (
-        <p className="status-message" role="status">
-          {routeMessage}
-        </p>
-      )}
-      <p>Create or join a watch party here later.</p>
+    <main className="home-page">
+      <section className="home-card">
+        <div className="home-intro">
+          <p className="eyebrow">REAL-TIME WATCHING</p>
+          <h1>YouTube Watch Party</h1>
+          <p className="home-description">
+            Create a room, invite your friends, and watch together in sync.
+          </p>
+        </div>
 
-      <section>
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          disabled={isSubmitting}
-          placeholder="Enter your name"
-        />
+        {routeMessage && (
+          <p className="status-message home-feedback" role="status">
+            {routeMessage}
+          </p>
+        )}
+
+        <section className="form-section">
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            disabled={isSubmitting}
+            placeholder="Enter your name"
+          />
+        </section>
+
+        <section className="form-section action-section">
+          <button
+            className="primary-action"
+            type="button"
+            onClick={handleCreateRoom}
+            disabled={isSubmitting}
+          >
+            Create Room
+          </button>
+        </section>
+
+        <section className="join-section">
+          <div className="join-section-heading">
+            <span />
+            <p>or join an existing room</p>
+            <span />
+          </div>
+
+          <label htmlFor="roomId">Room Code</label>
+          <input
+            id="roomId"
+            type="text"
+            value={roomId}
+            onChange={(event) => setRoomId(event.target.value)}
+            disabled={isSubmitting}
+            placeholder="Enter room code"
+          />
+
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={handleJoinRoom}
+            disabled={isSubmitting}
+          >
+            Join Room
+          </button>
+        </section>
+
+        {error && (
+          <p className="error-message home-feedback" role="alert">
+            {error}
+          </p>
+        )}
       </section>
-
-      <section>
-        <button
-          type="button"
-          onClick={handleCreateRoom}
-          disabled={isSubmitting}
-        >
-          Create Room
-        </button>
-      </section>
-
-      <section>
-        <label htmlFor="roomId">Room Code</label>
-        <input
-          id="roomId"
-          type="text"
-          value={roomId}
-          onChange={(event) => setRoomId(event.target.value)}
-          disabled={isSubmitting}
-          placeholder="Enter room code"
-        />
-
-        <button type="button" onClick={handleJoinRoom} disabled={isSubmitting}>
-          Join Room
-        </button>
-      </section>
-
-      {routeMessage && <p role="status">{routeMessage}</p>}
-      {error && <p role="alert">{error}</p>}
     </main>
   );
 };

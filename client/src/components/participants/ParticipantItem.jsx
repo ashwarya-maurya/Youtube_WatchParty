@@ -21,14 +21,15 @@ const ParticipantItem = ({
     (participant.role === "participant" || participant.role === "moderator");
 
   return (
-    <li className="participant-item">
+    <li className={`participant-item ${isSelf ? "is-self" : ""}`}>
       <span className="participant-name">{participant.username}</span>
-      <span className="role-badge">{roleLabel}</span>
+      <span className={`role-badge role-${participant.role}`}>{roleLabel}</span>
 
       {(canPromote || canRemove) && (
         <div className="participant-actions">
           {canPromote && (
             <button
+              className="participant-action promote-action"
               type="button"
               onClick={() => onAssignRole(participant.socketId)}
             >
@@ -38,6 +39,7 @@ const ParticipantItem = ({
 
           {canRemove && (
             <button
+              className="participant-action remove-action"
               type="button"
               onClick={() => onRemoveParticipant(participant.socketId)}
             >
