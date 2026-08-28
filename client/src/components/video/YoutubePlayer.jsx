@@ -19,7 +19,7 @@ const YouTubePlayer = ({
 
   if (!videoId) {
     return (
-      <section>
+      <section className="video-empty-state" role="status">
         <p>No video selected yet.</p>
         <p>Enter a YouTube URL to load a video for this room.</p>
       </section>
@@ -27,7 +27,7 @@ const YouTubePlayer = ({
   }
 
   return (
-    <section>
+    <section className="video-player">
       <YouTube
         videoId={videoId}
         onReady={handleReady}

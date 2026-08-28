@@ -20,49 +20,65 @@ const ChatPanel = ({ messages, onSendMessage, chatError, isConnected }) => {
   };
 
   return (
-    <section>
+    <section className="chat-panel">
       <h2>Chat</h2>
 
-      {chatError && <p>{chatError}</p>}
-      {validationError && <p>{validationError}</p>}
+      {chatError && (
+        <p className="error-message" role="alert">
+          {chatError}
+        </p>
+      )}
+
+      {validationError && (
+        <p className="error-message" role="alert">
+          {validationError}
+        </p>
+      )}
 
       {messages.length === 0 ? (
-        <p>No messages yet.</p>
+        <p className="status-message" role="status">
+          No messages yet.
+        </p>
       ) : (
-        <ul>
+        <ul className="chat-message-list">
           {messages.map((message) => (
-            <li key={message.id}>
-              <p>{message.username}</p>
-              <p>{message.text}</p>
-              <time dateTime={message.timestamp}>
-                {new Date(message.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </time>
+            <li className="chat-message" key={message.id}>
+              <div className="chat-message-header">
+                <span className="chat-message-author">{message.username}</span>
+                <time dateTime={new Date(message.timestamp).toISOString()}>
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </time>
+              </div>
+
+              <p className="chat-message-text">{message.text}</p>
             </li>
           ))}
         </ul>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form className="chat-form" onSubmit={handleSubmit}>
         <label htmlFor="chat-message">Message</label>
 
-        <input
-          id="chat-message"
-          type="text"
-          value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-            setValidationError("");
-          }}
-          placeholder="Type a message"
-          disabled={!isConnected}
-        />
+        <div className="chat-form-row">
+          <input
+            id="chat-message"
+            type="text"
+            value={text}
+            onChange={(event) => {
+              setText(event.target.value);
+              setValidationError("");
+            }}
+            placeholder="Type a message"
+            disabled={!isConnected}
+          />
 
-        <button type="submit" disabled={!isConnected}>
-          Send
-        </button>
+          <button type="submit" disabled={!isConnected}>
+            Send
+          </button>
+        </div>
       </form>
     </section>
   );

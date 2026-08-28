@@ -21,23 +21,29 @@ const VideoUrlForm = ({ onVideoSelected }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="video-url-form" onSubmit={handleSubmit}>
       <label htmlFor="youtube-url">YouTube URL</label>
 
-      <input
-        id="youtube-url"
-        type="url"
-        value={url}
-        onChange={(event) => {
-          setUrl(event.target.value);
-          setError("");
-        }}
-        placeholder="https://www.youtube.com/watch?v=..."
-      />
+      <div className="video-url-form-row">
+        <input
+          id="youtube-url"
+          type="url"
+          value={url}
+          onChange={(event) => {
+            setUrl(event.target.value);
+            setError("");
+          }}
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
 
-      {error && <p>{error}</p>}
+        <button type="submit">Load Video</button>
+      </div>
 
-      <button type="submit">Load Video</button>
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
     </form>
   );
 };

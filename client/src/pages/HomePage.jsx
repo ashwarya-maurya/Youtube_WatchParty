@@ -98,7 +98,11 @@ const HomePage = () => {
   return (
     <main>
       <h1>YouTube Watch Party</h1>
-      {routeMessage && <p>{routeMessage}</p>}
+      {routeMessage && (
+        <p className="status-message" role="status">
+          {routeMessage}
+        </p>
+      )}
       <p>Create or join a watch party here later.</p>
 
       <section>

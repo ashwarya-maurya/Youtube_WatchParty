@@ -21,26 +21,30 @@ const ParticipantItem = ({
     (participant.role === "participant" || participant.role === "moderator");
 
   return (
-    <li>
-      <span>{participant.username}</span>
-      <span>{roleLabel}</span>
+    <li className="participant-item">
+      <span className="participant-name">{participant.username}</span>
+      <span className="role-badge">{roleLabel}</span>
 
-      {canPromote && (
-        <button
-          type="button"
-          onClick={() => onAssignRole(participant.socketId)}
-        >
-          Make Moderator
-        </button>
-      )}
+      {(canPromote || canRemove) && (
+        <div className="participant-actions">
+          {canPromote && (
+            <button
+              type="button"
+              onClick={() => onAssignRole(participant.socketId)}
+            >
+              Make Moderator
+            </button>
+          )}
 
-      {canRemove && (
-        <button
-          type="button"
-          onClick={() => onRemoveParticipant(participant.socketId)}
-        >
-          Remove
-        </button>
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemoveParticipant(participant.socketId)}
+            >
+              Remove
+            </button>
+          )}
+        </div>
       )}
     </li>
   );

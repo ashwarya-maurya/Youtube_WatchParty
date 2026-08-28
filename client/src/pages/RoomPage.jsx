@@ -435,13 +435,39 @@ const RoomPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleRoomClosed = ({ message }) => {
+      const roomClosedMessage =
+        message || "The host left. This room has been closed.";
+
+      navigate("/", {
+        replace: true,
+        state: { message: roomClosedMessage },
+      });
+    };
+
+    socket.on(SOCKET_EVENTS.ROOM_CLOSED, handleRoomClosed);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.ROOM_CLOSED, handleRoomClosed);
+    };
+  }, [navigate]);
+
   return (
-    <main>
-      <header>
+    <main className="room-page">
+      <header className="room-header">
         <h1>Watch Party Room</h1>
-        <p>Room code: {roomId}</p>
-        <p>Connection: {connectionStatus}</p>
-        <p>Share link: {roomUrl}</p>
+        <p className="room-meta">Room code: {roomId}</p>
+        <p
+          className={`room-meta connection-status ${
+            connectionStatus === "Connected"
+              ? "connection-online"
+              : "connection-offline"
+          }`}
+        >
+          Connection: {connectionStatus}
+        </p>
+        <p className="room-meta">Share link: {roomUrl}</p>
 
         {localParticipant ? (
           <p>
@@ -455,50 +481,62 @@ const RoomPage = () => {
         )}
       </header>
 
-      <section>
-        <h2>Video</h2>
+      <div className="room-layout">
+        <section className="video-column">
+          <h2>Video</h2>
 
-        {canControlPlayback ? (
-          <VideoUrlForm onVideoSelected={handleVideoSelected} />
-        ) : (
-          <p>Only the Host or a Moderator can change the video.</p>
-        )}
+          {canControlPlayback ? (
+            <VideoUrlForm onVideoSelected={handleVideoSelected} />
+          ) : (
+            <p className="status-message" role="status">
+              Only the Host or a Moderator can change the video.
+            </p>
+          )}
 
-        {videoError && <p>{videoError}</p>}
+          {videoError && (
+            <p className="error-message" role="alert">
+              {videoError}
+            </p>
+          )}
 
-        <YouTubePlayer
-          videoId={videoId}
-          onPlayerReady={handlePlayerReady}
-          onPlayerStateChange={handlePlayerStateChange}
-          canControlPlayback={canControlPlayback}
-        />
-      </section>
+          <YouTubePlayer
+            videoId={videoId}
+            onPlayerReady={handlePlayerReady}
+            onPlayerStateChange={handlePlayerStateChange}
+            canControlPlayback={canControlPlayback}
+          />
+        </section>
 
-      <aside>
-        <ParticipantList
-          participants={participants}
-          isHost={isHost}
-          localSocketId={socket.id}
-          onAssignRole={handleAssignRole}
-          onRemoveParticipant={handleRemoveParticipant}
-        />
+        <aside className="sidebar">
+          <ParticipantList
+            participants={participants}
+            isHost={isHost}
+            localSocketId={socket.id}
+            onAssignRole={handleAssignRole}
+            onRemoveParticipant={handleRemoveParticipant}
+          />
 
-        {participantActionError && <p>{participantActionError}</p>}
+          {participantActionError && (
+            <p className="error-message" role="alert">
+              {participantActionError}
+            </p>
+          )}
 
-        <ChatPanel
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          chatError={chatError}
-          isConnected={socket.connected}
-        />
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            chatError={chatError}
+            isConnected={socket.connected}
+          />
 
-        <ReactionPanel
-          reactions={reactions}
-          onSendReaction={handleSendReaction}
-          reactionError={reactionError}
-          isConnected={socket.connected}
-        />
-      </aside>
+          <ReactionPanel
+            reactions={reactions}
+            onSendReaction={handleSendReaction}
+            reactionError={reactionError}
+            isConnected={socket.connected}
+          />
+        </aside>
+      </div>
     </main>
   );
 };

@@ -4,6 +4,7 @@ import socket from "./services/socketService";
 import HomePage from "./pages/HomePage";
 import RoomPage from "./pages/RoomPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import "./App.css";
 
 const App = () => {
   const [connectionStatus, setConnectionStatus] = useState("Disconnected");

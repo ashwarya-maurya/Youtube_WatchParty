@@ -8,13 +8,15 @@ const ParticipantList = ({
   onRemoveParticipant,
 }) => {
   return (
-    <section>
+    <section className="participant-panel">
       <h2>Participants</h2>
 
       {participants.length === 0 ? (
-        <p>No participants loaded yet.</p>
+        <p className="status-message" role="status">
+          No participants loaded yet.
+        </p>
       ) : (
-        <ul>
+        <ul className="participant-list">
           {participants.map((participant) => (
             <ParticipantItem
               key={participant.socketId}

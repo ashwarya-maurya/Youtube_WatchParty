@@ -7,12 +7,13 @@ const ReactionPanel = ({
   isConnected,
 }) => {
   return (
-    <section>
+    <section className="reactions-panel">
       <h2>Reactions</h2>
 
-      <div>
+      <div className="reaction-buttons">
         {allowedEmojis.map((emoji) => (
           <button
+            className="reaction-button"
             key={emoji}
             type="button"
             onClick={() => onSendReaction(emoji)}
@@ -23,11 +24,15 @@ const ReactionPanel = ({
         ))}
       </div>
 
-      {reactionError && <p>{reactionError}</p>}
+      {reactionError && (
+        <p className="error-message" role="alert">
+          {reactionError}
+        </p>
+      )}
 
-      <div>
+      <div className="active-reactions">
         {reactions.map((reaction) => (
-          <span key={reaction.id}>
+          <span className="reaction-pill" key={reaction.id}>
             {reaction.emoji} {reaction.username}
           </span>
         ))}
