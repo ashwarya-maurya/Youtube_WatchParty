@@ -7,6 +7,7 @@ import YouTubePlayer from "../components/video/YoutubePlayer";
 import VideoUrlForm from "../components/video/VideoUrlForm";
 import ChatPanel from "../components/chat/ChatPanel";
 import ReactionPanel from "../components/reactions/ReactionPanel";
+const getPlaybackTimestamp = () => Date.now();
 
 const RoomPage = () => {
   const { roomId } = useParams();
@@ -32,7 +33,7 @@ const RoomPage = () => {
     }
 
     hasAppliedInitialSyncRef.current = true;
-    suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+    suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
     player.seekTo(initialSyncState.currentTime || 0, true);
 
@@ -306,7 +307,7 @@ const RoomPage = () => {
     const handleVideoChanged = (playbackState) => {
       isVideoChangePendingRef.current = true;
       isPlayerPlayingRef.current = false;
-      suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+      suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
       setVideoId(playbackState.videoId);
       setVideoError("");
@@ -331,12 +332,12 @@ const RoomPage = () => {
       setVideoError("");
 
       if (action === "play") {
-        const now = Date.now();
+        const now = getPlaybackTimestamp();
         const estimatedCurrentTime =
           playbackState.currentTime + (now - playbackState.updatedAt) / 1000;
 
         remotePlaybackActionRef.current = "play";
-        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+        suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
         player.seekTo(estimatedCurrentTime, true);
         player.playVideo();
@@ -345,7 +346,7 @@ const RoomPage = () => {
 
       if (action === "pause") {
         remotePlaybackActionRef.current = "pause";
-        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+        suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
         player.seekTo(playbackState.currentTime, true);
         player.pauseVideo();
@@ -353,7 +354,7 @@ const RoomPage = () => {
       }
 
       if (action === "seek") {
-        suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+        suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
         player.seekTo(playbackState.currentTime, true);
       }
@@ -387,7 +388,7 @@ const RoomPage = () => {
         return;
       }
 
-      const now = Date.now();
+      const now = getPlaybackTimestamp();
       const currentTime = player.getCurrentTime();
 
       if (previousTime === null || previousObservedAt === null) {
@@ -522,25 +523,27 @@ const RoomPage = () => {
         </div>
 
         <div className="room-details">
-          <p className="room-meta">
+          <label className="room-meta room-copy-control room-code-control">
             <span className="room-meta-label">Room code</span>
-            <strong>{roomId}</strong>
-          </p>
+            <input
+              className="room-copy-field"
+              type="text"
+              value={roomId}
+              readOnly
+              aria-label="Room code"
+            />
+          </label>
 
-          <p
-            className={`room-meta connection-status ${
-              connectionStatus === "Connected"
-                ? "connection-online"
-                : "connection-offline"
-            }`}
-          >
-            {connectionStatus}
-          </p>
-
-          <p className="room-meta room-share-link">
+          <label className="room-meta room-copy-control room-share-control">
             <span className="room-meta-label">Share link</span>
-            {roomUrl}
-          </p>
+            <input
+              className="room-copy-field"
+              type="text"
+              value={roomUrl}
+              readOnly
+              aria-label="Room share link"
+            />
+          </label>
         </div>
 
         {!localParticipant && (

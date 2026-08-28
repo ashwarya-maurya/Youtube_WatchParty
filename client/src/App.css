@@ -310,44 +310,6 @@ button:disabled {
   margin-bottom: 2px;
 }
 
-.room-share-link {
-  min-width: min(100%, 280px);
-  flex: 1 1 280px;
-  overflow-wrap: anywhere;
-  color: var(--color-text-muted);
-  font-size: 0.88rem;
-}
-
-.connection-status {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  padding: 7px 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
-.connection-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.connection-online {
-  background: var(--color-success-surface);
-  color: var(--color-success);
-}
-
-.connection-offline {
-  background: var(--color-danger-surface);
-  color: var(--color-danger);
-}
-
 .room-direct-access-message {
   margin: 18px 0 0;
   padding: 10px 12px;
@@ -915,4 +877,44 @@ button:disabled {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+.room-details {
+  align-items: end;
+}
+
+.room-copy-control {
+  display: grid;
+  gap: 5px;
+}
+
+.room-code-control {
+  flex: 0 0 130px;
+}
+
+.room-share-control {
+  min-width: 0;
+  flex: 1 1 360px;
+}
+
+.room-copy-field {
+  min-height: 38px;
+  border-color: var(--color-border);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  cursor: text;
+}
+
+@media (max-width: 640px) {
+  .room-details {
+    align-items: stretch;
+  }
+
+  .room-code-control,
+  .room-share-control {
+    flex-basis: 100%;
+  }
+
 }

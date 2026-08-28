@@ -35,7 +35,7 @@ const YouTubePlayer = ({
         opts={{
           width: "100%",
           playerVars: {
-            controls: canControlPlayback ? 1 : 0,
+            controls: 1,
           },
         }}
       />
