@@ -14,6 +14,7 @@ const RoomPage = () => {
   const navigate = useNavigate();
   const youtubePlayerRef = useRef(null);
   const remotePlaybackActionRef = useRef(null);
+  const isVideoChangePendingRef = useRef(false);
   const suppressSeekDetectionUntilRef = useRef(0);
   const hasAppliedInitialSyncRef = useRef(false);
   const isPlayerPlayingRef = useRef(false);
@@ -49,6 +50,22 @@ const RoomPage = () => {
 
     if (!player) {
       return;
+    }
+
+    if (isVideoChangePendingRef.current) {
+      if (event.data === 1) {
+        isVideoChangePendingRef.current = false;
+        isPlayerPlayingRef.current = false;
+        remotePlaybackActionRef.current = "pause";
+        player.pauseVideo();
+        return;
+      }
+
+      if (event.data === 2 || event.data === 5) {
+        isVideoChangePendingRef.current = false;
+        isPlayerPlayingRef.current = false;
+        return;
+      }
     }
 
     if (event.data === 1) {
@@ -126,8 +143,18 @@ const RoomPage = () => {
       return;
     }
 
-    const hasCurrentRoomSession =
-      initialParticipant && initialParticipant.socketId === socket.id;
+    if (!initialParticipant) {
+      navigate("/", {
+        replace: true,
+        state: {
+          prefilledRoomId: roomId,
+          message: `Enter a username to join room ${roomId}.`,
+        },
+      });
+      return;
+    }
+
+    const hasCurrentRoomSession = initialParticipant.socketId === socket.id;
 
     if (hasCurrentRoomSession) {
       return;
@@ -139,7 +166,7 @@ const RoomPage = () => {
         message: "This room no longer exists or is unavailable.",
       },
     });
-  }, [connectionStatus, initialParticipant, navigate]);
+  }, [connectionStatus, initialParticipant, navigate, roomId]);
 
   const localParticipant = useMemo(() => {
     if (!socket.id) {
@@ -277,6 +304,10 @@ const RoomPage = () => {
 
   useEffect(() => {
     const handleVideoChanged = (playbackState) => {
+      isVideoChangePendingRef.current = true;
+      isPlayerPlayingRef.current = false;
+      suppressSeekDetectionUntilRef.current = Date.now() + 1500;
+
       setVideoId(playbackState.videoId);
       setVideoError("");
     };

@@ -4,14 +4,14 @@ import socket from "../services/socketService";
 import SOCKET_EVENTS from "../constants/socketEvents";
 
 const HomePage = () => {
-  const [username, setUsername] = useState("");
-  const [roomId, setRoomId] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const routeMessage = location.state?.message;
+
+  const [username, setUsername] = useState("");
+  const [roomId, setRoomId] = useState(location.state?.prefilledRoomId || "");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateRoom = () => {
     const trimmedUsername = username.trim();
