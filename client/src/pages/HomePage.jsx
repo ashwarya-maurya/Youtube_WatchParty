@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import socket from "../services/socketService";
 import SOCKET_EVENTS from "../constants/socketEvents";
@@ -12,6 +12,37 @@ const HomePage = () => {
   const [roomId, setRoomId] = useState(location.state?.prefilledRoomId || "");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [connectionState, setConnectionState] = useState(
+    socket.connected ? "connected" : "connecting",
+  );
+
+  useEffect(() => {
+    const handleConnect = () => {
+      setConnectionState("connected");
+    };
+
+    const handleDisconnect = () => {
+      setConnectionState("disconnected");
+    };
+
+    const handleConnectError = () => {
+      setConnectionState("disconnected");
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+    };
+  }, []);
 
   const handleCreateRoom = () => {
     const trimmedUsername = username.trim();
@@ -100,6 +131,17 @@ const HomePage = () => {
       <section className="home-card">
         <h1 className="home-brand">YouTube Watch Party</h1>
 
+        <p
+          className={`home-connection-status is-${connectionState}`}
+          role="status"
+        >
+          {connectionState === "connected"
+            ? "Connected"
+            : connectionState === "connecting"
+              ? "Connecting..."
+              : "Connection unavailable. Retrying..."}
+        </p>
+
         {routeMessage && (
           <p className="status-message home-feedback" role="status">
             {routeMessage}
@@ -126,7 +168,7 @@ const HomePage = () => {
               className="primary-action"
               type="button"
               onClick={handleCreateRoom}
-              disabled={isSubmitting}
+              disabled={isSubmitting || connectionState !== "connected"}
             >
               Create Room
             </button>
@@ -161,7 +203,7 @@ const HomePage = () => {
               className="secondary-action"
               type="button"
               onClick={handleJoinRoom}
-              disabled={isSubmitting}
+              disabled={isSubmitting || connectionState !== "connected"}
             >
               Join Room
             </button>
