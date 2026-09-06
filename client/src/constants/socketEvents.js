@@ -16,6 +16,7 @@ const SOCKET_EVENTS = {
   CHAT_MESSAGE: "chat_message",
   SEND_REACTION: "send_reaction",
   REACTION_RECEIVED: "reaction_received",
+  LEAVE_ROOM: "leave_room",
 };
 
 export default SOCKET_EVENTS;

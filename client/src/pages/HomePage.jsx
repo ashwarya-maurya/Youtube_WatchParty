@@ -98,13 +98,7 @@ const HomePage = () => {
   return (
     <main className="home-page">
       <section className="home-card">
-        <div className="home-intro">
-          <p className="eyebrow">REAL-TIME WATCHING</p>
-          <h1>YouTube Watch Party</h1>
-          <p className="home-description">
-            Create a room, invite your friends, and watch together in sync.
-          </p>
-        </div>
+        <h1 className="home-brand">YouTube Watch Party</h1>
 
         {routeMessage && (
           <p className="status-message home-feedback" role="status">
@@ -112,55 +106,67 @@ const HomePage = () => {
           </p>
         )}
 
-        <section className="form-section">
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            disabled={isSubmitting}
-            placeholder="Enter your name"
-          />
-        </section>
+        <div className="home-action-groups">
+          <section className="home-action-group">
+            <div className="home-action-heading">
+              <h2>Create Room</h2>
+            </div>
 
-        <section className="form-section action-section">
-          <button
-            className="primary-action"
-            type="button"
-            onClick={handleCreateRoom}
-            disabled={isSubmitting}
-          >
-            Create Room
-          </button>
-        </section>
+            <label htmlFor="create-username">Username</label>
+            <input
+              id="create-username"
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              disabled={isSubmitting}
+              placeholder="Enter your name"
+            />
 
-        <section className="join-section">
-          <div className="join-section-heading">
-            <span />
-            <p>or join an existing room</p>
-            <span />
-          </div>
+            <button
+              className="primary-action"
+              type="button"
+              onClick={handleCreateRoom}
+              disabled={isSubmitting}
+            >
+              Create Room
+            </button>
+          </section>
 
-          <label htmlFor="roomId">Room Code</label>
-          <input
-            id="roomId"
-            type="text"
-            value={roomId}
-            onChange={(event) => setRoomId(event.target.value)}
-            disabled={isSubmitting}
-            placeholder="Enter room code"
-          />
+          <section className="home-action-group">
+            <div className="home-action-heading">
+              <h2>Join Room</h2>
+            </div>
 
-          <button
-            className="secondary-action"
-            type="button"
-            onClick={handleJoinRoom}
-            disabled={isSubmitting}
-          >
-            Join Room
-          </button>
-        </section>
+            <label htmlFor="join-username">Username</label>
+            <input
+              id="join-username"
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              disabled={isSubmitting}
+              placeholder="Enter your name"
+            />
+
+            <label htmlFor="roomId">Room Code</label>
+            <input
+              id="roomId"
+              type="text"
+              value={roomId}
+              onChange={(event) => setRoomId(event.target.value)}
+              disabled={isSubmitting}
+              placeholder="Enter room code"
+            />
+
+            <button
+              className="secondary-action"
+              type="button"
+              onClick={handleJoinRoom}
+              disabled={isSubmitting}
+            >
+              Join Room
+            </button>
+          </section>
+        </div>
 
         {error && (
           <p className="error-message home-feedback" role="alert">

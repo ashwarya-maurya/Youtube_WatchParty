@@ -20,6 +20,7 @@ const RoomPage = () => {
   const hasAppliedInitialSyncRef = useRef(false);
   const isPlayerPlayingRef = useRef(false);
   const reactionRemovalTimersRef = useRef({});
+  const isLeavingRef = useRef(false);
 
   const handlePlayerReady = (player) => {
     youtubePlayerRef.current = player;
@@ -53,39 +54,41 @@ const RoomPage = () => {
       return;
     }
 
-    if (isVideoChangePendingRef.current) {
-      if (event.data === 1) {
+    const playerAction =
+      event.data === 1 ? "play" : event.data === 2 ? "pause" : null;
+
+    if (!playerAction) {
+      return;
+    }
+
+    const remoteAction = remotePlaybackActionRef.current;
+
+    if (remoteAction) {
+      if (playerAction === remoteAction) {
+        remotePlaybackActionRef.current = null;
         isVideoChangePendingRef.current = false;
-        isPlayerPlayingRef.current = false;
-        remotePlaybackActionRef.current = "pause";
+        isPlayerPlayingRef.current = remoteAction === "play";
+        return;
+      }
+
+      if (remoteAction === "play") {
+        player.playVideo();
+      } else {
         player.pauseVideo();
-        return;
       }
 
-      if (event.data === 2 || event.data === 5) {
-        isVideoChangePendingRef.current = false;
-        isPlayerPlayingRef.current = false;
-        return;
-      }
-    }
-
-    if (event.data === 1) {
-      isPlayerPlayingRef.current = true;
-    }
-
-    if (event.data === 2) {
-      isPlayerPlayingRef.current = false;
-    }
-
-    if (event.data === 1 && remotePlaybackActionRef.current === "play") {
-      remotePlaybackActionRef.current = null;
       return;
     }
 
-    if (event.data === 2 && remotePlaybackActionRef.current === "pause") {
-      remotePlaybackActionRef.current = null;
+    isVideoChangePendingRef.current = false;
+
+    const isPlaying = playerAction === "play";
+
+    if (isPlayerPlayingRef.current === isPlaying) {
       return;
     }
+
+    isPlayerPlayingRef.current = isPlaying;
 
     if (!canControlPlayback) {
       return;
@@ -97,24 +100,18 @@ const RoomPage = () => {
     }
 
     const currentTime = player.getCurrentTime();
+    const socketEvent =
+      playerAction === "play" ? SOCKET_EVENTS.PLAY : SOCKET_EVENTS.PAUSE;
+    const fallbackError =
+      playerAction === "play"
+        ? "Failed to play video."
+        : "Failed to pause video.";
 
-    if (event.data === 1) {
-      socket.emit(SOCKET_EVENTS.PLAY, { currentTime }, (response) => {
-        if (!response?.success) {
-          setVideoError(response?.error || "Failed to play video.");
-        }
-      });
-
-      return;
-    }
-
-    if (event.data === 2) {
-      socket.emit(SOCKET_EVENTS.PAUSE, { currentTime }, (response) => {
-        if (!response?.success) {
-          setVideoError(response?.error || "Failed to pause video.");
-        }
-      });
-    }
+    socket.emit(socketEvent, { currentTime }, (response) => {
+      if (!response?.success) {
+        setVideoError(response?.error || fallbackError);
+      }
+    });
   };
 
   const navigationState = location.state;
@@ -138,6 +135,9 @@ const RoomPage = () => {
 
   const [reactions, setReactions] = useState([]);
   const [reactionError, setReactionError] = useState("");
+
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState("");
 
   useEffect(() => {
     if (connectionStatus !== "Connected") {
@@ -245,6 +245,35 @@ const RoomPage = () => {
     );
   };
 
+  const handleLeaveRoom = () => {
+    if (!socket.connected) {
+      setLeaveError("Socket is not connected. Please refresh and try again.");
+      return;
+    }
+
+    setLeaveError("");
+    setIsLeaving(true);
+    isLeavingRef.current = true;
+
+    socket.emit(SOCKET_EVENTS.LEAVE_ROOM, (response) => {
+      if (!response?.success) {
+        isLeavingRef.current = false;
+        setIsLeaving(false);
+        setLeaveError(response?.error || "Failed to leave the room.");
+        return;
+      }
+
+      navigate("/", {
+        replace: true,
+        state: {
+          message: response.roomClosed
+            ? "You left the room. The room was closed."
+            : "You left the room.",
+        },
+      });
+    });
+  };
+
   const handleSendMessage = (text) => {
     if (!socket.connected) {
       setChatError("Socket is not connected. Please refresh and try again.");
@@ -332,14 +361,10 @@ const RoomPage = () => {
       setVideoError("");
 
       if (action === "play") {
-        const now = getPlaybackTimestamp();
-        const estimatedCurrentTime =
-          playbackState.currentTime + (now - playbackState.updatedAt) / 1000;
-
         remotePlaybackActionRef.current = "play";
         suppressSeekDetectionUntilRef.current = getPlaybackTimestamp() + 1500;
 
-        player.seekTo(estimatedCurrentTime, true);
+        player.seekTo(playbackState.currentTime, true);
         player.playVideo();
         return;
       }
@@ -489,6 +514,10 @@ const RoomPage = () => {
 
   useEffect(() => {
     const handleRoomClosed = ({ message }) => {
+      if (isLeavingRef.current) {
+        return;
+      }
+
       const roomClosedMessage =
         message || "The host left. This room has been closed.";
 
@@ -511,13 +540,11 @@ const RoomPage = () => {
         <div className="room-title-row">
           <div>
             <p className="eyebrow">WATCH PARTY ROOM</p>
-            <h1>Watch Party Room</h1>
           </div>
 
           {localParticipant && (
             <p className="room-user-summary">
-              <span>Signed in as</span>
-              {localParticipant.username}
+              <span>Signed in as : {localParticipant.username}</span>
             </p>
           )}
         </div>
@@ -544,7 +571,24 @@ const RoomPage = () => {
               aria-label="Room share link"
             />
           </label>
+
+          {localParticipant && (
+            <button
+              className="leave-room-button"
+              type="button"
+              onClick={handleLeaveRoom}
+              disabled={isLeaving}
+            >
+              {isLeaving ? "Leaving..." : "Leave Room"}
+            </button>
+          )}
         </div>
+
+        {leaveError && (
+          <p className="error-message" role="alert">
+            {leaveError}
+          </p>
+        )}
 
         {!localParticipant && (
           <p className="status-message room-direct-access-message">
